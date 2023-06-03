@@ -1,3 +1,9 @@
+"""exchange.py
+
+Perform currency exchange-related calculations.
+"""
+
+
 def exchange_money(budget: float, exchange_rate: float) -> float:
     """
 
