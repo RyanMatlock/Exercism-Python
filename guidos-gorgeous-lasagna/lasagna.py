@@ -9,6 +9,7 @@ of a module and its functions and/or classes.
 
 
 EXPECTED_BAKE_TIME = 40
+PREPARATION_TIME_PER_LAYER = 2
 
 
 def bake_time_remaining(elapsed_bake_time: int) -> int:
@@ -32,8 +33,7 @@ def preparation_time_in_minutes(number_of_layers: int) -> int:
     :param number_of_layers: int - number of layers in the lasagna
     :return: int - preparation time
     """
-    PREP_TIME_PER_LAYER = 2
-    return PREP_TIME_PER_LAYER * number_of_layers
+    return PREPARATION_TIME_PER_LAYER * number_of_layers
 
 
 def elapsed_time_in_minutes(number_of_layers: int,
