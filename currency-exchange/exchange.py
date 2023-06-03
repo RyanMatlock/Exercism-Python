@@ -5,7 +5,7 @@ def exchange_money(budget: float, exchange_rate: float) -> float:
     :param exchange_rate: float - unit value of the foreign currency.
     :return: float - exchanged value of the foreign currency you can receive.
     """
-    pass
+    return budget / exchange_rate
 
 
 def get_change(budget: float, exchanging_value: float) -> float:
@@ -16,8 +16,7 @@ def get_change(budget: float, exchanging_value: float) -> float:
     now.
     :return: float - amount left of your starting currency after exchanging.
     """
-
-    pass
+    return budget - exchanging_value
 
 
 def get_value_of_bills(denomination: int, number_of_bills: int) -> int:
@@ -27,8 +26,7 @@ def get_value_of_bills(denomination: int, number_of_bills: int) -> int:
     :param number_of_bills: int - amount of bills you received.
     :return: int - total value of bills you now have.
     """
-
-    pass
+    return denomination * number_of_bills
 
 
 def get_number_of_bills(budget: float, denomination: int) -> int:
@@ -38,8 +36,7 @@ def get_number_of_bills(budget: float, denomination: int) -> int:
     :param denomination: int - the value of a single bill.
     :return: int - number of bills after exchanging all your money.
     """
-
-    pass
+    return int(budget // denomination)
 
 
 def get_leftover_of_bills(budget: float, denomination: int) -> float:
@@ -50,8 +47,7 @@ def get_leftover_of_bills(budget: float, denomination: int) -> float:
     :return: float - the leftover amount that cannot be exchanged given the
     current denomination.
     """
-
-    pass
+    return budget % denomination
 
 
 def exchangeable_value(budget: float,
@@ -67,5 +63,7 @@ def exchangeable_value(budget: float,
     :param denomination: int - the value of a single bill.
     :return: int - maximum value you can get.
     """
-
-    pass
+    effective_exchange_rate = exchange_rate * (1 + (spread / 100))
+    exchange_value = exchange_money(budget, effective_exchange_rate)
+    num_bills = get_number_of_bills(exchange_value, denomination)
+    return get_value_of_bills(denomination, num_bills)
