@@ -1,0 +1,280 @@
+#+title: Pascal's Triangle
+
+* Inferior Python testing
+
+#+begin_src python
+  def rows_helper(rows_remaining: int, acc: List[List[int]]) -> List[List[int]]:
+      if rows_remaining == 0:
+          return acc
+      else:
+          logging.debug(f"acc: {acc}")
+          rows_helper(
+              rows_remaining - 1,
+              # >>> [[1]] + [generate_next_row([[1]][-1])]
+              # [[1], [1, 1]]
+              acc + [generate_next_row(acc[-1])]
+          )
+#+end_src
+
+#+begin_src python
+  >>> rows_helper(2, [[1]])
+  rows_helper(2, [[1]])
+  DEBUG:root:acc: [[1]]
+  DEBUG:root:acc: [[1], [1, 1]]
+  >>> None == rows_helper(2, [[1]])
+  None == rows_helper(2, [[1]])
+  DEBUG:root:acc: [[1]]
+  DEBUG:root:acc: [[1], [1, 1]]
+  True
+#+end_src
+
+Ok, that's super confusing because it looks like I'm returning ~acc~.
+
+Did a little more digging:
+
+#+begin_src python
+  if rows_remaining == 0:
+      logging.debug(f"going to return acc: {acc}")
+      return acc
+#+end_src
+
+#+begin_src emacs-lisp
+  >>> rows_helper(2, [[1]])
+  rows_helper(2, [[1]])
+  DEBUG:root:acc: [[1]]
+  DEBUG:root:acc: [[1], [1, 1]]
+  DEBUG:root:going to return acc: [[1], [1, 1], [1, 2, 1]]
+#+end_src
+
+so I probably need to return ~acc~ at the outermost function call, which I wasn't
+doing (the inner function calls will do likewise once they get returns from
+deeper functions).
+
+Ok, I made a mistake, but I get what's wrong.
+
+#+begin_src python
+  def rows_helper(rows_remaining: int, acc: List[List[int]]) -> List[List[int]]:
+      if rows_remaining == 0:
+          logging.debug(f"going to return acc: {acc}")
+          return acc
+      else:
+          logging.debug(f"acc: {acc}")
+          rows_helper(
+              rows_remaining - 1,
+              # >>> [[1]] + [generate_next_row([[1]][-1])]
+              # [[1], [1, 1]]
+              acc + [generate_next_row(acc[-1])]
+          )
+      return acc
+#+end_src
+
+You need to return ~rows_helper~:
+
+#+begin_src python
+  def rows_helper(rows_remaining: int, acc: List[List[int]]) -> List[List[int]]:
+      if rows_remaining == 0:
+          logging.debug(f"going to return acc: {acc}")
+          return acc
+      else:
+          logging.debug(f"acc: {acc}")
+          return rows_helper(
+              rows_remaining - 1,
+              # >>> [[1]] + [generate_next_row([[1]][-1])]
+              # [[1], [1, 1]]
+              acc + [generate_next_row(acc[-1])]
+          )
+#+end_src
+
+#+begin_src python
+  >>> rows_helper(2, [[1]])
+  rows_helper(2, [[1]])
+  DEBUG:root:acc: [[1]]
+  DEBUG:root:acc: [[1], [1, 1]]
+  DEBUG:root:going to return acc: [[1], [1, 1], [1, 2, 1]]
+  [[1], [1, 1], [1, 2, 1]]
+#+end_src
+
+There ya go!
+
+* Performance issues
+
+#+begin_src python
+  from typing import List
+  import logging
+
+
+  def generate_next_row(prev_row: List[int]) -> List[int]:
+      next_row = [1 for _ in range(len(prev_row) + 1)]
+      for i, _ in enumerate(next_row):
+          if 0 < i and i < len(next_row) - 1:
+              next_row[i] = prev_row[i-1] + prev_row[i]
+          else:
+              pass
+      return next_row
+
+
+  def rows_helper(rows_remaining: int, acc: List[List[int]]) -> List[List[int]]:
+      if rows_remaining == 0:
+          logging.debug(f"going to return acc: {acc}")
+          return acc
+      else:
+          logging.debug(f"acc: {acc}")
+          return rows_helper(
+              rows_remaining - 1,
+              # >>> [[1]] + [generate_next_row([[1]][-1])]
+              # [[1], [1, 1]]
+              acc + [generate_next_row(acc[-1])]
+          )
+
+
+  def rows(row_count: int) -> List[List[int]]:
+      if row_count < 0:
+          raise ValueError("number of rows is negative")
+      elif row_count == 0:
+          return []
+      else:
+          return rows_helper(row_count - 1, [[1]])
+#+end_src
+
+This looks like it's working, but...
+
+#+begin_src shell
+  $ pytest
+  =============================== test session starts ================================platform darwin -- Python 3.9.16, pytest-7.3.1, pluggy-1.0.0
+  rootdir: /Users/<user>/Library/CloudStorage/Dropbox/projects/Exercism/python/pascals-triangle
+  collected 10 items                                                                 
+
+  pascals_triangle_test.py .....^C
+
+  !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! KeyboardInterrupt !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!/Users/<user>/Library/CloudStorage/Dropbox/projects/Exercism/python/pascals-triangle/pascals_triangle.py:27: KeyboardInterrupt
+  (to show a full traceback on KeyboardInterrupt use --full-trace)
+  ================================ 5 passed in 8.19s =================================
+#+end_src
+
+8.19s is too slow!
+
+I think I may be doing my recursive call stupidly and duplicating a lot of
+work. I need to think about what I'm ~return~​ing and where in
+~rows_helper~. Apparently not actually.
+
+After commenting out
+
+#+begin_src python
+  def test_solution_is_recursive(self):
+      with self.assertRaises(RecursionError) as err:
+          rows(sys.getrecursionlimit() + 10)
+          self.assertEqual(type(err.exception), RecursionError)
+          self.assertEqual(
+              err.exception.args[0][:32], "maximum recursion depth exceeded"
+          )
+#+end_src
+
+I got this:
+
+#+begin_src shell
+  [<user>@<device>:pascals-triangle] $ pytest
+  =============================== test session starts ================================platform darwin -- Python 3.9.16, pytest-7.3.1, pluggy-1.0.0
+  rootdir: /Users/<user>/Library/CloudStorage/Dropbox/projects/Exercism/python/pascals-triangle
+  collected 9 items                                                                  
+
+  pascals_triangle_test.py .........                                           [100%]
+
+  ================================ 9 passed in 0.01s =================================[<user>@<device>:pascals-triangle] $ pytest
+  =============================== test session starts ================================platform darwin -- Python 3.9.16, pytest-7.3.1, pluggy-1.0.0
+  rootdir: /Users/<user>/Library/CloudStorage/Dropbox/projects/Exercism/python/pascals-triangle
+  collected 10 items                                                                 
+
+  pascals_triangle_test.py ..........                                          [100%]
+
+  =============================== 10 passed in 54.58s ================================
+#+end_src
+
+And adding the test back in made it take nearly a minute. Let's see how this
+runs on the server. No joy; the tests timed out (not a huge surprise).
+
+For reference:
+
+#+begin_src python
+  >>> import sys
+  import sys
+  >>> sys.getrecursionlimit()
+  sys.getrecursionlimit()
+  1000
+#+end_src
+
+** Tail recursive?
+
+#+begin_src python
+  >>> rows(3)
+  rows(3)
+  DEBUG:root:acc: [[1]]
+  DEBUG:root:acc: [[1], [1, 1]]
+  DEBUG:root:going to return acc: [[1], [1, 1], [1, 2, 1]]
+  [[1], [1, 1], [1, 2, 1]]
+#+end_src
+
+That looks tail recursive to me because it's not expanding and then contracting
+like
+
+#+begin_example
+  | .
+  |  .
+  |   .
+  |  .
+  | .
+#+end_example
+
+I suspect ~acc + [generate_next_row(acc[-1])]~ is slow, but that's also the step
+where I'm doing the work. I could try using ~<list1>.extend(<list2>)~ per [[https://stackoverflow.com/q/17044508][What is
+the fastest way to merge two lists in python? | stackoverflow]].
+
+#+begin_src python
+  >>> rows(3)
+  rows(3)
+  DEBUG:root:acc: [[1]]
+  DEBUG:root:acc: None
+  Traceback (most recent call last):
+  ⋮ -- cut --
+      acc.extend([generate_next_row(acc[-1])])
+      ^^^^^^^^^^
+  AttributeError: 'NoneType' object has no attribute 'extend'
+#+end_src
+
+That's curious. Ohh, ~extend~ doesn't return a new list, it just updates the list
+on which it operates.
+
+#+begin_src python
+  def rows_helper(rows_remaining: int, acc: List[List[int]]) -> List[List[int]]:
+      if rows_remaining == 0:
+          logging.debug(f"going to return acc: {acc}")
+          return acc
+      else:
+          logging.debug(f"rows_remaining: {rows_remaining}\n"
+                        f"acc: {acc}")
+          acc.extend([generate_next_row(acc[-1])])
+          return rows_helper(
+              rows_remaining - 1,
+              # >>> [[1]] + [generate_next_row([[1]][-1])]
+              # [[1], [1, 1]]
+              # acc + [generate_next_row(acc[-1])]
+              acc
+          )
+#+end_src
+
+#+begin_src shell
+  $ pytest
+  =============================== test session starts ================================platform darwin -- Python 3.9.16, pytest-7.3.1, pluggy-1.0.0
+  rootdir: /Users/<user>/Library/CloudStorage/Dropbox/projects/Exercism/python/pascals-triangle
+  collected 10 items                                                                 
+
+  pascals_triangle_test.py ..........                                          [100%]
+
+  =============================== 10 passed in 55.38s ================================
+#+end_src
+
+That didn't work.
+
+Wait a minute, I'm doing the work /before/ making the recursive call, so of
+course it's going to take too long :facepalm:
+
+Maybe I should just try a ~for~ or ~while~ loop in ~rows~ that calls itself.

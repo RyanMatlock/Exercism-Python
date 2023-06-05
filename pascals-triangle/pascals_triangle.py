@@ -1,4 +1,12 @@
+"""pascals_triangle.py
+
+Recursively calculate Pascal's triangle to a given number of rows."""
+
 from typing import List
+import logging
+
+
+logging.basicConfig(level=logging.WARNING)
 
 
 def generate_next_row(prev_row: List[int]) -> List[int]:
@@ -13,13 +21,18 @@ def generate_next_row(prev_row: List[int]) -> List[int]:
 
 def rows_helper(rows_remaining: int, acc: List[List[int]]) -> List[List[int]]:
     if rows_remaining == 0:
+        logging.debug(f"going to return acc: {acc}")
         return acc
     else:
-        rows_helper(
+        logging.debug(f"rows_remaining: {rows_remaining}\n"
+                      f"acc: {acc}")
+        acc.extend([generate_next_row(acc[-1])])
+        return rows_helper(
             rows_remaining - 1,
             # >>> [[1]] + [generate_next_row([[1]][-1])]
             # [[1], [1, 1]]
-            acc + [generate_next_row(acc[-1])]
+            # acc + [generate_next_row(acc[-1])]
+            acc
         )
 
 
@@ -29,4 +42,4 @@ def rows(row_count: int) -> List[List[int]]:
     elif row_count == 0:
         return []
     else:
-        return rows_helper(row_count, [[1]])
+        return rows_helper(row_count - 1, [[1]])
