@@ -277,4 +277,64 @@ That didn't work.
 Wait a minute, I'm doing the work /before/ making the recursive call, so of
 course it's going to take too long :facepalm:
 
-Maybe I should just try a ~for~ or ~while~ loop in ~rows~ that calls itself.
+Maybe I should just try a ~for~ or ~while~ loop in ~rows~ that calls itself. No, on
+second thought, I think I still need a helper function with an accumulator.
+
+#+begin_src python
+  def append_next_row(accumulator: List[List[int]]) -> List[List[int]]:
+      try:
+          prev_row = accumulator[-1]
+          next_row = [1 for _ in range(len(prev_row) + 1)]
+          for i, _ in enumerate(next_row):
+              if 0 < i and i < len(next_row) - 1:
+                  next_row[i] = prev_row[i-1] + prev_row[i]
+              else:
+                  pass
+      except IndexError:
+          next_row = [1]
+
+      return accumulator + [next_row]
+#+end_src
+
+#+begin_src python
+  >>> append_next_row(append_next_row([[1]]))
+  append_next_row(append_next_row([[1]]))
+  [[1], [1, 1], [1, 2, 1]]
+#+end_src
+
+That looks pretty recursive.
+
+Trying to be functional:
+
+#+begin_src python
+  def do_times(n: int, function: Callable[[T], T]) -> T:
+      if n < 0:
+          raise ValueError(f"n must be ≥ 0; given {n}.")
+
+      while n > 0:
+          return function(do_times(n - 1, function))
+#+end_src
+
+But failing. Wait, maybe not:
+
+#+begin_src python
+  >>> do_times(3, append_next_row([]))
+  do_times(3, append_next_row([]))
+  ⋮ -- cut --
+  TypeError: 'list' object is not callable
+#+end_src
+
+How I was calling this was failing (and I think my type signature is wrong).
+
+#+begin_src python
+  >>> type(do_times(3, append_next_row()))
+  type(do_times(3, append_next_row()))
+  Traceback (most recent call last):
+    File "<stdin>", line 1, in <module>
+  TypeError: append_next_row() missing 1 required positional argument: 'accumulator'
+#+end_src
+
+Ok, I was hoping to get back a function type, but I see why I'm not. Maybe this
+calls for something like ~reduce~? Although I remember reading somewhere that
+~filter~, ~map~, and (maybe) ~reduce~ aren't very Pythonic because at least the
+former two can be achieved with list comprehensions, and the latter...¯\_(ツ)_/¯
