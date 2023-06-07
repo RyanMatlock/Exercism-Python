@@ -1,1 +1,5 @@
+# Python derived files
 */__pycache__/*
+
+# Org mode derived files
+*.png
