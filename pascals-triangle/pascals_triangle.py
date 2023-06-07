@@ -3,6 +3,7 @@
 Recursively calculate Pascal's triangle to a given number of rows."""
 
 from typing import List, Callable, TypeVar
+from functools import reduce
 import logging
 
 
@@ -21,27 +22,59 @@ T = TypeVar('T')
 #     return next_row
 
 
-def append_next_row(accumulator: List[List[int]]) -> List[List[int]]:
-    try:
-        prev_row = accumulator[-1]
-        next_row = [1 for _ in range(len(prev_row) + 1)]
-        for i, _ in enumerate(next_row):
-            if 0 < i and i < len(next_row) - 1:
-                next_row[i] = prev_row[i-1] + prev_row[i]
-            else:
-                pass
-    except IndexError:
-        next_row = [1]
+# def append_next_row(accumulator: List[List[int]]) -> List[List[int]]:
+#     try:
+#         prev_row = accumulator[-1]
+#         next_row = [1 for _ in range(len(prev_row) + 1)]
+#         for i, _ in enumerate(next_row):
+#             if 0 < i and i < len(next_row) - 1:
+#                 next_row[i] = prev_row[i-1] + prev_row[i]
+#             else:
+#                 pass
+#     except IndexError:
+#         next_row = [1]
 
-    return accumulator + [next_row]
+#     return accumulator + [next_row]
 
 
-def do_times(n: int, function: Callable[[T], T]) -> Callable[[T], T]:
-    if n < 0:
-        raise ValueError(f"n must be ≥ 0; given {n}.")
+def append_next_row(rows_remaining: int,
+                    accumulator: List[List[int]]) -> List[List[int]]:
+    if rows_remaining < 0:
+        raise ValueError("number of rows is negative")
+    elif rows_remaining == 0:
+        return accumulator
+    else:
+        try:
+            prev_row = accumulator[-1]
+            next_row = [1 for _ in range(len(prev_row) + 1)]
+            for i, _ in enumerate(next_row):
+                if 0 < i and i < len(next_row) - 1:
+                    next_row[i] = prev_row[i-1] + prev_row[i]
+                else:
+                    pass
+        except IndexError:
+            next_row = [1]
 
-    while n > 0:
-        return function(do_times(n - 1, function))
+        return append_next_row(rows_remaining - 1,
+                               accumulator + [next_row])
+
+
+# def do_times(n: int, function: Callable[[T], T]) -> Callable[[T], T]:
+#     if n < 0:
+#         raise ValueError(f"n must be ≥ 0; given {n}.")
+
+#     while n > 0:
+#         return function(do_times(n - 1, function))
+
+
+# def do_times(n: int,
+#              initial_value: T,
+#              function: Callable[[T], T]) -> Callable[[T], T]:
+#     if n < 0:
+#         raise ValueError(f"n must be ≥ 0; given {n}.")
+
+#     while n > 0:
+#         return function(do_times(n - 1, function))
 
 
 # def rows_helper(rows_remaining: int, acc: List[List[int]]) -> List[List[int]]:
@@ -63,18 +96,18 @@ def do_times(n: int, function: Callable[[T], T]) -> Callable[[T], T]:
 # def rows_helper(rows_remaining: int, acc: List[List[int]]) -> List[List[int]]:
 #     for _ in range(rows_remaining):
 
-def rows_helper(row_countdown: int,
-                acc: List[List[int]]) -> List[List[int]]:
-    if row_countdown == 0:
-        return acc
-    else:
-        rows_helper(row_countdown - 1,
-                    append_next_row(acc[-1]))
+# def rows_helper(row_countdown: int,
+#                 acc: List[List[int]]) -> List[List[int]]:
+#     if row_countdown == 0:
+#         return acc
+#     else:
+#         rows_helper(row_countdown - 1,
+#                     append_next_row(acc[-1]))
 
 
 def rows(row_count: int) -> List[List[int]]:
-    if row_count < 0:
-        raise ValueError("number of rows is negative")
+    # if row_count < 0:
+    #     raise ValueError("number of rows is negative")
     # elif row_count == 0:
     #     return []
     # else:
@@ -84,4 +117,4 @@ def rows(row_count: int) -> List[List[int]]:
     #     pascals_triangle.append(generate_next_row(rows(row_count - 1)))
     # that isn't right
 
-    return rows_helper(row_count, [])
+    return append_next_row(row_count, [])
