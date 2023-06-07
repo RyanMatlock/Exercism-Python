@@ -30,4 +30,10 @@ class Scale:
         return self.scale
 
     def interval(self, intervals: str) -> List[str]:
-        pass
+        index = 0
+        mode = [self.scale[index]]
+        for interval in intervals:
+            index += 1 if interval == "m" else \
+                2 if interval == "M" else 3  # nested ternary
+            mode.append(self.scale[index % SCALE_LEN])
+        return mode
