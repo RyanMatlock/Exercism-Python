@@ -66,3 +66,40 @@ integer ~indices~:
           xs[index] = replacement
       return xs
 #+end_src
+
+* Community solutions
+From [[https://exercism.org/tracks/python/exercises/hangman/solutions/Steffan153][Steffan153]]:
+
+#+begin_src python
+  class Hangman:
+      def __init__(self, word):
+          self.remaining_guesses = 9
+          self.status = STATUS_ONGOING
+          self.guesses = []
+          self.word = word
+
+      def guess(self, char):
+          if self.status != STATUS_ONGOING:
+              raise ValueError("The game has already ended.")
+          if char not in self.word or char in self.guesses:
+              self.remaining_guesses -= 1
+          else:
+              self.guesses.append(char)
+          self.update_status()
+
+      def update_status(self):
+          if set(self.guesses) == set(self.word):
+              self.status = STATUS_WIN
+          elif self.remaining_guesses < 0:
+              self.status = STATUS_LOSE
+
+      def get_masked_word(self):
+          return ''.join(
+              char if char in self.guesses else '_' for char in self.word
+          )
+
+      def get_status(self):
+          return self.status
+#+end_src
+
+This is way better than my solution on account of the list comprehension.
