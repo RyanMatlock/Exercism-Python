@@ -380,3 +380,17 @@ Hey, that actually worked!
           return append_next_row(rows_remaining - 1,
                                  accumulator + [next_row])
 #+end_src
+
+#+begin_src shell
+  $ pytest
+  =============================== test session starts ================================platform darwin -- Python 3.11.2, pytest-7.3.1, pluggy-1.0.0
+  rootdir: /Users/<user>/Library/CloudStorage/Dropbox/projects/Exercism/python/pascals-triangle
+  collected 10 items                                                                 
+
+  pascals_triangle_test.py ..........                                          [100%]
+
+  ================================ 10 passed in 0.07s ================================
+#+end_src
+
+The test suite seems to have hung on the Exercism server, but everything's fine
+here, so ¯\_(ツ)_/¯ I'm counting it as complete though.
