@@ -1,0 +1,68 @@
+#+title: Hangman
+
+* Helper functions
+** ~_get_all_indices~
+~index~ only returns the first instance of an object in a sequence, but what if I
+want all instances of a given object in a sequence?
+
+I can generalize the solution in [[https://stackoverflow.com/a/28182579/2677392][Get all indexes for a python list
+[duplicate] | stackoverflow]]. (Look, googling was the fastest way to check if
+there was a builtin function or simple module that did this---the point of
+Python isn't to reinvent the wheel.)
+
+#+begin_src python
+  def _get_all_indices(obj: T, seq: Sequence) -> List[int]:
+      return [index for index, value in enumerate(seq) if value == obj]
+#+end_src
+
+#+begin_src python
+  >>> _get_all_indices('o', "foobar")
+  _get_all_indices('o', "foobar")
+  [1, 2]
+#+end_src
+
++Actually, it turns out with ~replace~, I don't even need this :facepalm:+ No,
+actually, I need to write a ~replace_at_indices~ function.
+
+** ~_replace_at_indices~
+
+#+begin_src python
+  def _replace_at_indices(
+          xs: List[T], replacement: T, indices: int | List[int]
+  ) -> List[T]:
+      try:
+          xs[indices] = replacement
+      except TypeError:
+          for index in indices:
+              xs[index] = replacement
+      return xs
+#+end_src
+
+Given how loose Python is with lists, the ~List[T]~ thing doesn't need to hold,
+but it ought to---/and will in this use case!/
+
+#+begin_src python
+   >>> _replace_at_indices(list("foobar"), 'a', [1,2])
+   _replace_at_indices(list("foobar"), 'a', [1,2])
+   ['f', 'a', 'a', 'b', 'a', 'r']
+   >>> _replace_at_indices(list("foobar"), 'a', 2)
+   _replace_at_indices(list("foobar"), 'a', 2)
+  ['f', 'o', 'a', 'b', 'a', 'r']
+  >>> _replace_at_indices(list("foobar"), 'a', [])
+  _replace_at_indices(list("foobar"), 'a', [])
+  ['f', 'o', 'o', 'b', 'a', 'r']
+#+end_src
+
+That last one is really important because ~_get_all_indices~ may return the empty
+list.
+
+Decided to simplify the function given that it would never be called with an
+integer ~indices~:
+
+#+begin_src python
+  def _replace_at_indices(
+          xs: List[T], replacement: T, indices: List[int]) -> List[T]:
+      for index in indices:
+          xs[index] = replacement
+      return xs
+#+end_src
