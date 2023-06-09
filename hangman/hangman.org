@@ -103,3 +103,55 @@ From [[https://exercism.org/tracks/python/exercises/hangman/solutions/Steffan153
 #+end_src
 
 This is way better than my solution on account of the list comprehension.
+
+* Refactoring
+** ~match~ statements with constants
+[[https://stackoverflow.com/a/67181772/2677392][Python 3.10 match/case with constants [duplicate] | stackoverflow]] has info on
+using ~match~​/​~case~ statements with constants. Basically, you need to do something
+like
+
+#+begin_src python
+  # the RIGHT way
+  import types
+
+  constants = types.SimpleNamespace()
+  constants.FOO = 'foo'
+  constants.BAR = 'bar'
+
+  match string:
+      case constants.FOO:
+          # foo things
+      case constants.BAR:
+          # bar things
+#+end_src
+
+rather than
+
+#+begin_src python
+  # the WRONG way
+  FOO = 'foo'
+  BAR = 'bar'
+  match string:
+      case FOO:
+          # foo things
+      case BAR:
+          # bar things
+#+end_src
+
+** Trouble with ~get_masked_word~?
+
+#+begin_src python
+  >>> ''.join([letter if letter != 'a' else '_' for letter in "foobar"])
+  ''.join([letter if letter != 'a' else '_' for letter in "foobar"])
+  'foob_r'
+  >>> [guess for guess in ['a', 'b', 'c', 'foobar'] if len(guess) == 1]
+  [guess for guess in ['a', 'b', 'c', 'foobar'] if len(guess) == 1]
+  ['a', 'b', 'c']
+#+end_src
+
+Never mind, I was making a stupid mistake.
+
+** Refactoring with ~match~ instead of ~if~
+It actually looks pretty good like this, so as long as it's sufficiently
+performant in a given application, I'll probably start favoring ~match~ for
+condition-heavy control flow.
