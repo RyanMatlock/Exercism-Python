@@ -38,22 +38,11 @@ _flat_sharp = {}
 for sharp, flat in zip(_const.SHARP_SCALE, _const.FLAT_SCALE):
     _flat_sharp[flat] = sharp
 
-def _sharp_to_flat(note: str) -> str:
-    """Return the flat version of note."""
-    return _sharp_flat[note] if _is_sharp(note) else note
-
 def _enharmonic_complement(note: str) -> str:
     """Return the sharp/flat version of a flat/sharp note."""
     return note if _is_natural(note) else \
         _sharp_flat[note] if _is_sharp(note) else \
         _flat_sharp[note]
-
-def _is_minor(intervals: str) -> bool:
-    match list(intervals):
-        case ['m', 'M', *rest] | ['M', 'm', *rest]:
-            return True
-        case other:
-            return False
 
 def _uses_flats(tonic: str, intervals: str) -> bool:
     """Return True if a scale uses flats instead of sharps.
@@ -92,9 +81,6 @@ class Scale:
 
     def interval(self, intervals: str) -> List[str]:
         """Return the scale starting at the tonic for a given interval."""
-        # use_sharps = _is_flat(self.tonic) or \
-        #     (self.tonic in ('D', 'G', 'C', 'F') and _is_minor(intervals))
-
         use_sharps = not _uses_flats(self.tonic, intervals)
 
         mode = [self.tonic]
@@ -104,9 +90,6 @@ class Scale:
                 2 if interval == "M" else 3  # nested ternary
             note = self.scale[index % _const.SCALE_LEN]
             mode.append(
-                # note if use_sharps and not _is_flat(note) \
-                # else _sharp_to_flat(note)
-                # note
                 note if use_sharps or _is_flat(note) \
                 else _enharmonic_complement(note)
             )
