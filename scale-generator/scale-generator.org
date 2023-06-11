@@ -213,3 +213,19 @@ conditions under which flats and sharps are used. The code isn't the issue for
 me---music theory is.
 
 [[https://en.wikipedia.org/wiki/Key_signature#Major_scale_structure][Key signature § Major scale structure | Wikipedia]] might be what I need.
+
+* Community solution :facepalm: moment
+
+Snippet from [[https://exercism.org/tracks/python/exercises/scale-generator/solutions/ExercismGhost][ExercismGhost's solution]]:
+
+#+begin_src python
+  def __init__(self, tonic):
+          self.tonic = tonic.title()
+          if tonic in ["C", "G", "D", "A", "E", "B", "F#", "a", "e", "b", "f#", "c#", "g#", "d#"]:
+              self.notes = Scale.notes_sharp
+          else:
+              self.notes = Scale.notes_flat
+#+end_src
+
+The case provided actually gave the answer of using sharps or flats away, but
+you ignored that.
