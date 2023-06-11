@@ -1,0 +1,18 @@
+#+title: Scale Generator
+
+* Notes to self
+** ~and~ doesn't short circuit
+
+#+begin_src python
+  >>> False and raise ValueError
+  False and raise ValueError
+    File "<stdin>", line 1
+      False and raise ValueError
+                ^^^^^
+  SyntaxError: invalid syntax
+#+end_src
+
+* What makes a scale minor
+Per [[https://en.wikipedia.org/wiki/Minor_scale][Minor scale | Wikipedia]], the second interval in a minor scale is a half
+step, so maybe that's enough to go on. (This isn't the case for opentatonic
+scales though...maybe?)
