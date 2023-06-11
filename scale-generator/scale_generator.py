@@ -49,14 +49,38 @@ def _enharmonic_complement(note: str) -> str:
         _flat_sharp[note]
 
 def _is_minor(intervals: str) -> bool:
-    return intervals[1] == 'm'
+    match list(intervals):
+        case ['m', 'M', *rest] | ['M', 'm', *rest]:
+            return True
+        case other:
+            return False
+
+def _uses_flats(tonic: str, intervals: str) -> bool:
+    """Return True if a scale uses flats instead of sharps.
+
+    See https://en.wikipedia.org/wiki/Key_signature#Major_scale_structure"""
+    match (tonic, list(intervals)):
+        case 'F', _:
+            return True
+        case tonic, _ if _is_flat(tonic):
+            return True
+        # dorian + octatonic kludge
+        case _, intervals if intervals == list("MmMMMmM") \
+             or intervals == list("MmMmMmMm"):
+            return False
+        case tonic, ['m', 'M', *rest] | ['M', 'm', *rest] \
+             if tonic in ('A', 'D', 'G', 'C'):
+            return True
+        case other:
+            return False
 
 
 class Scale:
     def __init__(self, tonic: str) -> None:
         self.tonic = tonic.title()  # ensure first char is capitalized
-        base_scale = _const.SHARP_SCALE if tonic in _const.SHARP_SCALE and \
-            tonic in _const.CONVENTIONAL_SHARP_SCALES else _const.FLAT_SCALE
+        base_scale = _const.SHARP_SCALE if self.tonic in _const.SHARP_SCALE \
+            and self.tonic in _const.CONVENTIONAL_SHARP_SCALES \
+            else _const.FLAT_SCALE
         root_index = base_scale.index(self.tonic)
         self.scale = [None for _ in range(_const.SCALE_LEN)]
         for i, _ in enumerate(self.scale):
@@ -68,8 +92,10 @@ class Scale:
 
     def interval(self, intervals: str) -> List[str]:
         """Return the scale starting at the tonic for a given interval."""
-        use_sharps = _is_flat(self.tonic) or \
-            (self.tonic in ('D', 'G', 'C', 'F') and _is_minor(intervals))
+        # use_sharps = _is_flat(self.tonic) or \
+        #     (self.tonic in ('D', 'G', 'C', 'F') and _is_minor(intervals))
+
+        use_sharps = not _uses_flats(self.tonic, intervals)
 
         mode = [self.tonic]
         index = 0
@@ -78,7 +104,10 @@ class Scale:
                 2 if interval == "M" else 3  # nested ternary
             note = self.scale[index % _const.SCALE_LEN]
             mode.append(
-                note if use_sharps and not _is_flat(note) \
-                else _sharp_to_flat(note)
+                # note if use_sharps and not _is_flat(note) \
+                # else _sharp_to_flat(note)
+                # note
+                note if use_sharps or _is_flat(note) \
+                else _enharmonic_complement(note)
             )
         return mode

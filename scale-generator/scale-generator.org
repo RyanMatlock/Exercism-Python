@@ -12,7 +12,204 @@
   SyntaxError: invalid syntax
 #+end_src
 
-* What makes a scale minor
+** (in)​~sanity_check~
+
+#+begin_src python
+  def sanity_check(test: str):
+      match list(test):
+          case list("foo"):
+              print("foo found")
+          case other:
+              print(f"{test!r} isn't {'foo'!r}")
+#+end_src
+
+#+begin_src python
+  >>> sanity_check("foo")
+  sanity_check("foo")
+  'foo' isn't 'foo'
+#+end_src
+
+#+begin_src python
+  def sanity_check(test: str):
+      match list(test):
+          case list("foo"):
+              print("foo found")
+          case ['f', 'o', 'o']:
+              print("foo found (the hard way)")
+          case other:
+              print(f"{test!r} isn't {'foo'!r}")
+#+end_src
+
+#+begin_src python
+  >>> sanity_check("foo")
+  sanity_check("foo")
+  foo found (the hard way)
+#+end_src
+
+#+begin_src python
+  >>> ['f', 'o', 'o'] == list("foo")
+  ['f', 'o', 'o'] == list("foo")
+  True
+#+end_src
+
+Ok, from [[https://stackoverflow.com/a/66946307/2677392][Why do the list function and list literals act differently? |
+stackoverflow]], I see that "~list(...)~ is not interchangeable with ~[...]~," but
+later in that post, it seems that ~list(string) == [<characters in string>]~, so
+what's going on here?
+
+See [[https://stackoverflow.com/a/70983263/2677392][Python match case shows error with list element as case. Expected ":"]].
+
+* Helper functions
+** ~_enharmonic_complement~
+Apparently A♭ and G♯ (and C♯/D♭, etc.) are known as "enharmonic pairs," so it
+seems useful to have a function that can transform one into the
+other. "Enharmonic complement" doesn't seem to be the proper term for that, but
+whatever, it's clear what I mean.
+
+* Debugging
+** What makes a scale minor
 Per [[https://en.wikipedia.org/wiki/Minor_scale][Minor scale | Wikipedia]], the second interval in a minor scale is a half
 step, so maybe that's enough to go on. (This isn't the case for opentatonic
 scales though...maybe?)
+
+** Which scales contain flats
+- F major: interval: =MMmMMMm=; contains B♭.
+- B♭ minor
+- E♭ myxolydian
+- G locrian: interval: =mMMmMMM=; contains A♭, B♭, D♭, E♭
+- D harmonic minor: interval =MmMMmAm=; contains B♭, D♭
+- D♭ hexatonic
+
+Of those, I need to worry about F major, G locrian, and D harmonic minor.
+
+** Naïve approach
+
+#+begin_src python
+  def interval(self, intervals: str) -> List[str]:
+      """Return the scale starting at the tonic for a given interval."""
+      use_sharps = _is_flat(self.tonic) or \
+          (self.tonic in ('D', 'G', 'C', 'F') and _is_minor(intervals))
+
+      mode = [self.tonic]
+      index = 0
+      for interval in intervals:
+          index += 1 if interval == "m" else \
+              2 if interval == "M" else 3  # nested ternary
+          note = self.scale[index % _const.SCALE_LEN]
+          mode.append(
+              # note if use_sharps and not _is_flat(note) \
+              # else _sharp_to_flat(note)
+              note
+          )
+      return mode
+#+end_src
+
+#+begin_src shell
+  $ pytest
+  =============================== test session starts ================================platform darwin -- Python 3.11.2, pytest-7.3.1, pluggy-1.0.0
+  rootdir: /Users/<user>/Library/CloudStorage/Dropbox/projects/Exercism/python/scale-generator
+  collected 17 items                                                                 
+
+  scale_generator_test.py .......F...F.....                                    [100%]
+
+  ===================================== FAILURES =====================================_______________________ ScaleGeneratorTest.test_lydian_mode ________________________
+  self = <scale_generator_test.ScaleGeneratorTest testMethod=test_lydian_mode>
+
+      def test_lydian_mode(self):
+          expected = ["A", "B", "C#", "D#", "E", "F#", "G#", "A"]
+  >       self.assertEqual(Scale("a").interval("MMMmMMm"), expected)
+  E       AssertionError: Lists differ: ['A', 'B', 'Db', 'Eb', 'E', 'Gb', 'Ab', 'A'] != ['A', 'B', 'C#', 'D#', 'E', 'F#', 'G#', 'A']
+  E       
+  E       First differing element 2:
+  E       'Db'
+  E       'C#'
+  E       
+  E       - ['A', 'B', 'Db', 'Eb', 'E', 'Gb', 'Ab', 'A']
+  E       + ['A', 'B', 'C#', 'D#', 'E', 'F#', 'G#', 'A']
+
+  scale_generator_test.py:52: AssertionError
+  _________________ ScaleGeneratorTest.test_minor_scale_with_sharps __________________
+  self = <scale_generator_test.ScaleGeneratorTest testMethod=test_minor_scale_with_sharps>
+
+      def test_minor_scale_with_sharps(self):
+          expected = ["F#", "G#", "A", "B", "C#", "D", "E", "F#"]
+  >       self.assertEqual(Scale("f#").interval("MmMMmMM"), expected)
+
+  scale_generator_test.py:36: 
+  _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+  self = <scale_generator.Scale object at 0x106369f90>, tonic = 'f#'
+
+      def __init__(self, tonic: str) -> None:
+          self.tonic = tonic.title()  # ensure first char is capitalized
+          base_scale = _const.SHARP_SCALE if tonic in _const.SHARP_SCALE and \
+              tonic in _const.CONVENTIONAL_SHARP_SCALES else _const.FLAT_SCALE
+  >       root_index = base_scale.index(self.tonic)
+  E       ValueError: 'F#' is not in list
+
+  scale_generator.py:60: ValueError
+  ============================= short test summary info ==============================FAILED scale_generator_test.py::ScaleGeneratorTest::test_lydian_mode - AssertionError: Lists differ: ['A', 'B', 'Db', 'Eb', 'E', 'Gb', 'Ab', 'A'] != [...
+  FAILED scale_generator_test.py::ScaleGeneratorTest::test_minor_scale_with_sharps - ValueError: 'F#' is not in list
+  =========================== 2 failed, 15 passed in 0.02s ===========================
+#+end_src
+
+Ohhh, I see for that second error, I forgot to update one of the ~tonic~​s to
+~self.tonic~.
+
+Ok, fixed that.
+
+#+begin_src shell
+  $ pytest
+  =============================== test session starts ================================platform darwin -- Python 3.11.2, pytest-7.3.1, pluggy-1.0.0
+  rootdir: /Users/<user>/Library/CloudStorage/Dropbox/projects/Exercism/python/scale-generator
+  collected 17 items                                                                 
+
+  scale_generator_test.py ....F.F..........                                    [100%]
+
+  ===================================== FAILURES =====================================______________________ ScaleGeneratorTest.test_harmonic_minor ______________________
+  self = <scale_generator_test.ScaleGeneratorTest testMethod=test_harmonic_minor>
+
+      def test_harmonic_minor(self):
+          expected = ["D", "E", "F", "G", "A", "Bb", "Db", "D"]
+  >       self.assertEqual(Scale("d").interval("MmMMmAm"), expected)
+  E       AssertionError: Lists differ: ['D', 'E', 'F', 'G', 'A', 'A#', 'C#', 'D'] != ['D', 'E', 'F', 'G', 'A', 'Bb', 'Db', 'D']
+  E       
+  E       First differing element 5:
+  E       'A#'
+  E       'Bb'
+  E       
+  E       - ['D', 'E', 'F', 'G', 'A', 'A#', 'C#', 'D']
+  E       ?                            ^^    ^^
+  E       
+  E       + ['D', 'E', 'F', 'G', 'A', 'Bb', 'Db', 'D']
+  E       ?                            ^^    ^^
+
+  scale_generator_test.py:64: AssertionError
+  _______________________ ScaleGeneratorTest.test_locrian_mode _______________________
+  self = <scale_generator_test.ScaleGeneratorTest testMethod=test_locrian_mode>
+
+      def test_locrian_mode(self):
+          expected = ["G", "Ab", "Bb", "C", "Db", "Eb", "F", "G"]
+  >       self.assertEqual(Scale("g").interval("mMMmMMM"), expected)
+  E       AssertionError: Lists differ: ['G', 'G#', 'A#', 'C', 'C#', 'D#', 'F', 'G'] != ['G', 'Ab', 'Bb', 'C', 'Db', 'Eb', 'F', 'G']
+  E       
+  E       First differing element 1:
+  E       'G#'
+  E       'Ab'
+  E       
+  E       - ['G', 'G#', 'A#', 'C', 'C#', 'D#', 'F', 'G']
+  E       ?        ^^    ^^         ^^    ^^
+  E       
+  E       + ['G', 'Ab', 'Bb', 'C', 'Db', 'Eb', 'F', 'G']
+  E       ?        ^^    ^^         ^^    ^^
+
+  scale_generator_test.py:60: AssertionError
+  ============================= short test summary info ==============================FAILED scale_generator_test.py::ScaleGeneratorTest::test_harmonic_minor - AssertionError: Lists differ: ['D', 'E', 'F', 'G', 'A', 'A#', 'C#', 'D'] != ['D...
+  FAILED scale_generator_test.py::ScaleGeneratorTest::test_locrian_mode - AssertionError: Lists differ: ['G', 'G#', 'A#', 'C', 'C#', 'D#', 'F', 'G'] != [...
+  =========================== 2 failed, 15 passed in 0.02s ===========================
+#+end_src
+
+It seems like where I'm really getting stuck is not understanding the
+conditions under which flats and sharps are used. The code isn't the issue for
+me---music theory is.
+
+[[https://en.wikipedia.org/wiki/Key_signature#Major_scale_structure][Key signature § Major scale structure | Wikipedia]] might be what I need.
