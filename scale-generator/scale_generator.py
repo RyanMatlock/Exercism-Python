@@ -34,9 +34,19 @@ _sharp_flat = {}
 for sharp, flat in zip(_const.SHARP_SCALE, _const.FLAT_SCALE):
     _sharp_flat[sharp] = flat
 
+_flat_sharp = {}
+for sharp, flat in zip(_const.SHARP_SCALE, _const.FLAT_SCALE):
+    _flat_sharp[flat] = sharp
+
 def _sharp_to_flat(note: str) -> str:
     """Return the flat version of note."""
     return _sharp_flat[note] if _is_sharp(note) else note
+
+def _enharmonic_complement(note: str) -> str:
+    """Return the sharp/flat version of a flat/sharp note."""
+    return note if _is_natural(note) else \
+        _sharp_flat[note] if _is_sharp(note) else \
+        _flat_sharp[note]
 
 def _is_minor(intervals: str) -> bool:
     return intervals[1] == 'm'
