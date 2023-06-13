@@ -1,0 +1,11 @@
+#+title: Exercism: Python track
+
+I've been using Python to some extent since Mark Lutz's [[https://www.oreilly.com/library/view/learning-python-3rd/9780596513986/][Learning Python (3rd
+ed.)]]. At the time, it was a godsend compared to C++ and MATLAB, but I've since
+learned to tame the parentheses of Lisp and appreciate a stronger typing
+system. That said, it's easy to write short scripts, and the numerical analysis
+and visualization tools would be difficult for me to give up.
+
+These exercises are my attempt to practice my Python-fu and ensure I'm capable
+of taking advantage of newer language features like type annotations and
+structural pattern matching.
